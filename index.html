@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Interest Ledger</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f4ee;--card:#fff;--tx:#111;--mu:#5a5952;--ac:#1f6f4a;--ac2:#9a6f00;--bd:#cfcbbd;--rd:#b3261e;--cl:#d00000;--hd:#e3ebe4}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151512;--card:#201f1b;--tx:#f5f3ea;--mu:#b5b3a6;--ac:#2f8f63;--ac2:#e0b34a;--bd:#4a493f;--rd:#f2877f;--cl:#ff6b6b;--hd:#2a3a30}}
+:root[data-theme="dark"]{--bg:#151512;--card:#201f1b;--tx:#f5f3ea;--mu:#b5b3a6;--ac:#2f8f63;--ac2:#e0b34a;--bd:#4a493f;--rd:#f2877f;--cl:#ff6b6b;--hd:#2a3a30}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-weight:800;padding:12px}
+h1{font-size:21px;font-weight:800;margin:4px 0 10px}
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.sum div,.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px}
+.sum small{color:var(--mu);display:block;font-size:12px;font-weight:800}
+.sum b{font-size:18px;font-weight:800}
+.sum .w2{grid-column:1/3}
+.sum .w{grid-column:1/3;background:var(--ac);color:#fff;border:0}
+.sum .w small{color:#e8fff3}
+input,select{width:100%;padding:10px;margin:4px 0;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit;font-weight:800}
+label{font-size:12px;color:var(--mu);font-weight:800}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button{font:inherit;font-weight:800;border:0;border-radius:8px;padding:11px;background:var(--ac);color:#fff;width:100%;margin-top:6px}
+button.s{width:auto;padding:3px 8px;margin:4px 4px 0 0;background:none;color:var(--ac);border:1px solid var(--ac);font-size:12px}
+button.d,button.dd{color:var(--rd);border:1px solid var(--rd);background:none}
+button.g2{background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
+.tabs button{margin:0;padding:9px 4px;background:var(--card);color:var(--tx);border:1px solid var(--bd);font-size:14px}
+.tabs button.on{background:var(--ac);color:#fff}
+details{margin:12px 0}summary{font-weight:800;padding:10px;background:var(--card);border:1px solid var(--bd);border-radius:12px}
+.tw{overflow-x:auto;background:var(--card);border:1px solid var(--bd);border-radius:12px;max-width:100%}
+table{border-collapse:collapse;min-width:1200px;width:100%;font-size:13px}
+th,td{font-weight:800;padding:7px 8px;border-bottom:1px solid var(--bd);border-right:1px solid var(--bd);white-space:nowrap;text-align:left}
+th{background:var(--hd);position:sticky;top:0;font-size:12px;font-weight:900}
+td.n{text-align:right}
+td.f,th.f{position:sticky;left:0;background:var(--card)}
+th.f{background:var(--hd)}
+tr.cl td,tr.cl td.f{color:var(--cl)}
+tr.cl button.s{color:var(--cl);border-color:var(--cl)}
+.tot{color:var(--ac2);font-weight:800}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);overflow:auto;z-index:20;padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px))}
+@media print{.noprint{display:none!important}.tw{overflow:visible}table{min-width:0;font-size:9px}}
+</style></head><body>
+<h1>Interest Ledger</h1>
+<div class="card noprint"><label>Gold rate per mg (applies to every entry)</label><input id="G" type="number" inputmode="decimal"></div>
+<div class="sum">
+<div><small>Total lent (active)</small><b id="sP">0</b></div>
+<div><small>Total interest</small><b id="sI">0</b></div>
+<div class="w"><small>Total receivable (principal + interest)</small><b id="sT">0</b></div>
+<div><small>Total gold (mg)</small><b id="sG">0</b></div>
+<div><small>Total gold value</small><b id="sV">0</b></div>
+<div><small>Active / closed entries</small><b id="sC">0</b></div>
+<div class="w2"><small>Previous cash collected (total received from closed)</small><b id="sR">0</b><small id="sU"></small></div>
+<div><small>Previous interest collected</small><b id="sIC">0</b></div>
+<div><small>Previous principal collected</small><b id="sPC">0</b></div>
+</div>
+<details id="dt" class="noprint"><summary>＋ New entry</summary><div class="card" style="margin-top:8px">
+<label>Party name</label><input id="n">
+<label>Area</label><input id="loc">
+<div class="row"><div><label>Date of entry</label><input id="d" type="date"></div>
+<div><label>Amount lent</label><input id="a" type="number" inputmode="decimal"></div></div>
+<div class="row"><div><label>Monthly interest (%)</label><input id="r" type="number" inputmode="decimal" value="2"></div>
+<div><label>Gold (mg)</label><input id="g" type="number" inputmode="decimal"></div></div>
+<label>Item description</label><input id="it">
+<button id="add">Save entry</button></div></details>
+<input id="q" class="noprint" type="search" placeholder="🔍 Search by customer name or area">
+<div class="tabs noprint"><button id="t0" class="on">Active</button><button id="t1">Closed</button><button id="t2">All</button><button id="pdf">⬇ PDF</button></div>
+<div class="tw"><table><thead><tr><th class="f">Party name</th><th>SL</th><th>Area</th><th>Date</th><th>Months</th><th>Amount</th><th>Rate</th><th>Interest</th><th>Total due</th><th>Gold (mg)</th><th>Rate/mg</th><th>Gold value</th><th>Item</th><th>Closed on</th><th>Interest collected</th><th>Received</th></tr></thead>
+<tbody id="tb"></tbody></table></div>
+<button id="more" class="noprint" style="display:none">Show more</button>
+<details class="noprint"><summary>Import / Export data</summary><div class="card" style="margin-top:8px">
+<button id="bk">⬇ Export backup (JSON)</button><button id="bx" class="g2">⬇ Export Excel (.xlsx)</button><button id="bc" class="g2">⬇ Export CSV</button>
+<div id="imp" style="margin-top:8px"></div>
+<textarea id="xt" rows="6" readonly style="display:none;width:100%;margin-top:8px;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:8px"></textarea>
+<button id="xc" class="g2" style="display:none">Copy text (paste it into WhatsApp, Notes or Drive)</button>
+<label style="display:block;margin-top:14px">Import from a file (.xlsx, .csv or .json backup)</label><input id="rf" type="file">
+<label style="display:block;margin-top:10px">Or paste backup text here</label>
+<textarea id="pt" rows="4" style="width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:8px"></textarea>
+<button id="pi">Import pasted text</button></div></details>
+<div id="ov" class="ov" style="display:none"><div class="card" style="max-width:520px;margin:0 auto">
+<h1 style="margin-top:0">Edit entry</h1>
+<label>Party name</label><input id="e_n">
+<label>Area</label><input id="e_loc">
+<div class="row"><div><label>Date of entry</label><input id="e_d" type="date"></div>
+<div><label>Amount lent</label><input id="e_a" type="number" inputmode="decimal"></div></div>
+<div class="row"><div><label>Monthly interest (%)</label><input id="e_r" type="number" inputmode="decimal"></div>
+<div><label>Gold (mg)</label><input id="e_g" type="number" inputmode="decimal"></div></div>
+<label>Item description</label><input id="e_it">
+<label>Status</label><select id="e_st"><option value="0">Active</option><option value="1">Closed</option></select>
+<div class="row"><div><label>Closed on</label><input id="e_cd" type="date"></div>
+<div><label>Amount received</label><input id="e_cr" type="number" inputmode="decimal"></div></div>
+<button id="e_save">Save changes</button>
+<button id="e_close" class="g2">Close this account</button>
+<button id="e_del" class="dd">Delete entry</button>
+<button id="e_x" class="g2">Cancel</button></div></div>
+<div id="cf" class="ov" style="display:none;z-index:30"><div class="card" style="max-width:420px;margin:12vh auto 0"><h1 id="cf_t" style="margin-top:0"></h1><div id="cf_m" style="line-height:1.5"></div><div id="cf_w" style="margin-top:8px"><label>Amount received</label><input id="cf_a" type="number" inputmode="decimal"></div><button id="cf_ok"></button><button id="cf_x" class="g2">Cancel</button></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+var K="ledgerStd1",KG="ledgerStdGold1",E=null,GR=0,tab=0,lim=80,dl=null,ei=-1,SEED=[];
+try{var s=localStorage.getItem(K);if(s)E=JSON.parse(s);var g0=localStorage.getItem(KG);if(g0!==null&&g0!=="")GR=+g0||0}catch(e){}
+if(!E)E=SEED;
+function save(){try{localStorage.setItem(K,JSON.stringify(E))}catch(e){}}
+function $(i){return document.getElementById(i)}
+function f(x){return (Math.round(x*100)/100).toLocaleString("en-IN")}
+function fd(d){return d?d.split("-").reverse().join("/"):""}
+function td(){return new Date().toISOString().slice(0,10)}
+function months(d1,d2){var m=(d2.getFullYear()-d1.getFullYear())*12+d2.getMonth()-d1.getMonth();if(d2.getDate()<d1.getDate())m--;return Math.max(0,m)}
+function calc(e){var m=months(new Date(e.d+"T00:00:00"),new Date());var i=e.a*e.r/100*m;return{m:m,i:i,t:e.a+i,gv:e.g*GR}}
+$("d").value=td();$("G").value=GR||"";
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function vis(){var q=$("q").value.trim().toLowerCase(),o=[];
+E.forEach(function(e,ix){if(tab==0&&e.st||tab==1&&!e.st)return;
+if(q&&(e.n+" "+(e.loc||"")).toLowerCase().indexOf(q)<0)return;o.push(ix)});return o}
+function render(){var sp=0,si=0,sg=0,sv=0,ca=0,cc=0,cr=0,pc=0,ic=0,un=0;
+E.forEach(function(e){var c=calc(e);if(e.st){cc++;cr+=e.cr||0;if(e.a){pc+=Math.min(e.a,e.cr||0);ic+=Math.max(0,(e.cr||0)-e.a)}else un+=e.cr||0}else{ca++;sp+=e.a;si+=c.i;sg+=e.g;sv+=c.gv}});
+var v=vis(),h="";
+v.forEach(function(ix,k){if(k>=lim)return;var e=E[ix],c=calc(e);
+h+='<tr'+(e.st?' class="cl"':'')+'><td class="f"><div>'+esc(e.n)+'</div><button class="s" onclick="oe('+ix+')">✎ Edit</button>'+
+(e.st?'<button class="s" onclick="ro('+ix+')">Reopen</button>':'<button class="s" onclick="cls('+ix+')">Close</button>')+'</td><td class="n">'+(k+1)+'</td><td>'+esc(e.loc||"")+'</td><td>'+fd(e.d)+'</td>'+
+(e.st?'<td></td><td class="n">'+(e.a?f(e.a):"")+'</td><td class="n">'+(e.a?e.r+"%":"")+'</td><td></td><td></td>':'<td class="n">'+c.m+'</td><td class="n">'+f(e.a)+'</td><td class="n">'+e.r+'%</td><td class="n">'+f(c.i)+'</td><td class="n tot">'+f(c.t)+'</td>')+
+'<td class="n">'+(e.g?f(e.g):"")+'</td><td class="n">'+(e.g?f(GR):"")+'</td><td class="n">'+(e.g?f(c.gv):"")+'</td><td>'+esc(e.it||"")+'</td><td>'+fd(e.cd)+'</td><td class="n">'+(e.st?(e.a?f(Math.max(0,(e.cr||0)-e.a)):'<button class="s" onclick="oe('+ix+')">Add amount</button>'):"")+'</td><td class="n">'+(e.st?f(e.cr||0):"")+'</td></tr>'});
+$("tb").innerHTML=h||'<tr><td colspan="16" style="text-align:center">No entries</td></tr>';
+$("more").style.display=v.length>lim?"block":"none";$("more").textContent="Show more ("+(v.length-lim)+" left)";
+$("sP").textContent=f(sp);$("sI").textContent=f(si);$("sT").textContent=f(sp+si);$("sG").textContent=f(sg);$("sV").textContent=f(sv);
+$("sC").textContent=ca+" / "+cc;$("sR").textContent=f(cr);$("sPC").textContent=f(pc);$("sIC").textContent=f(ic);$("sU").textContent=un?"Interest and principal are split only where the loan amount is recorded. Not split: "+f(un)+" (closed entries with no loan amount; tap Add amount on them)":""}
+var cfn=null;
+function dlg(title,msg,amt,def,ok,fn){$("cf_t").textContent=title;$("cf_m").innerHTML=msg;$("cf_w").style.display=amt?"block":"none";$("cf_a").value=def;$("cf_ok").textContent=ok;cfn=fn;$("cf").style.display="block"}
+$("cf_ok").onclick=function(){var v=$("cf_a").value;$("cf").style.display="none";if(cfn)cfn(v)};
+$("cf_x").onclick=function(){$("cf").style.display="none";cfn=null};
+function cls(i){var e=E[i],c=calc(e);dlg("Close account","<b>"+esc(e.n)+"</b><br>Principal "+f(e.a)+" · Interest "+f(c.i)+" · Total due "+f(c.t)+"<br>This moves the account to Closed.",true,Math.round(c.t),"Close account",function(v){e.cr=+v||0;e.cd=td();e.st=1;save();render()})}
+function ro(i){var e=E[i];dlg("Reopen account","Reopen <b>"+esc(e.n)+"</b>? It will move back to Active.",false,"","Reopen",function(){e.st=0;e.cd="";e.cr=0;save();render()})}
+function oe(i){ei=i;var e=E[i];$("e_n").value=e.n;$("e_loc").value=e.loc||"";$("e_d").value=e.d;$("e_a").value=e.a||"";$("e_r").value=e.r;$("e_g").value=e.g||"";$("e_it").value=e.it||"";$("e_st").value=e.st?"1":"0";$("e_cd").value=e.cd||"";$("e_cr").value=e.cr||"";$("ov").style.display="block"}
+function eclose(){$("ov").style.display="none";ei=-1}
+function esave(){var e=E[ei],n=$("e_n").value.trim();
+if(!n||!$("e_d").value){alert("Please enter name and date");return false}
+e.n=n;e.loc=$("e_loc").value.trim();e.d=$("e_d").value;e.a=+$("e_a").value||0;e.r=+$("e_r").value||2;e.g=+$("e_g").value||0;e.it=$("e_it").value.trim();
+e.st=+$("e_st").value;if(e.st){e.cd=$("e_cd").value||td();e.cr=+$("e_cr").value||0}else{e.cd="";e.cr=0}
+save();eclose();render();return true}
+$("e_save").onclick=esave;$("e_x").onclick=eclose;
+$("e_close").onclick=function(){$("e_st").value="1";if(!$("e_cd").value)$("e_cd").value=td();
+if(!$("e_cr").value){var c=calc({d:$("e_d").value||td(),a:+$("e_a").value||0,r:+$("e_r").value||2,g:0});$("e_cr").value=Math.round(c.t)}esave()};
+$("e_del").onclick=function(){var k=ei;dlg("Delete entry","Delete <b>"+esc(E[k].n)+"</b> permanently? This cannot be undone.",false,"","Delete",function(){E.splice(k,1);save();eclose();render()})};
+$("G").oninput=function(){GR=+this.value||0;try{localStorage.setItem(KG,String(GR))}catch(e){}render()};
+function tb(n){tab=n;lim=80;for(var i=0;i<3;i++)$("t"+i).className=i==n?"on":"";render()}
+$("t0").onclick=function(){tb(0)};$("t1").onclick=function(){tb(1)};$("t2").onclick=function(){tb(2)};
+$("more").onclick=function(){lim+=150;render()};
+$("add").onclick=function(){var n=$("n").value.trim(),a=+$("a").value;
+if(!n||!a||!$("d").value){alert("Please enter name, date and amount");return}
+E.unshift({n:n,d:$("d").value,a:a,r:+$("r").value||2,g:+$("g").value||0,p:0,loc:$("loc").value.trim(),it:$("it").value.trim(),st:0,cd:"",cr:0});
+save();["n","a","g","loc","it"].forEach(function(i){$(i).value=""});$("dt").open=false;tb(0)};
+$("q").oninput=function(){lim=80;render()};
+$("pdf").onclick=async function(){
+var J=window.jspdf;if(!J||!dl){window.print();return}
+var v=vis(),A=0,I=0,T=0,G=0,GV=0,R=0,PC=0,IC=0,rows=[],cl=[];
+v.forEach(function(ix,k){var e=E[ix],c=calc(e);
+if(!e.st){A+=e.a;I+=c.i;T+=c.t;G+=e.g;GV+=c.gv}else{R+=e.cr||0;if(e.a){PC+=Math.min(e.a,e.cr||0);IC+=Math.max(0,(e.cr||0)-e.a)}}cl.push(!!e.st);
+rows.push([k+1,e.n,e.loc||"",fd(e.d),e.st?"":c.m,e.st?"":f(e.a),e.st?"":e.r+"%",e.st?"":f(c.i),e.st?"":f(c.t),e.g?f(e.g):"",e.g?f(GR):"",e.g?f(c.gv):"",e.it||"",fd(e.cd),e.st&&e.a?f(Math.max(0,(e.cr||0)-e.a)):"",e.st?f(e.cr||0):""])});
+var doc=new J.jsPDF({orientation:"landscape",unit:"pt",format:"a4"});
+var nm=["Active entries","Closed entries","All entries"][tab];
+doc.setFontSize(15);doc.text("Interest Ledger Report - "+nm,30,34);
+doc.setFontSize(9);doc.text("Generated: "+fd(td())+"   |   Rows: "+v.length+"   |   Gold rate/mg: "+f(GR)+($("q").value.trim()?"   |   Search: "+$("q").value.trim():""),30,50);
+doc.text("Lent: "+f(A)+"   Interest: "+f(I)+"   Total due: "+f(T)+"   Gold: "+f(G)+" mg   Gold value: "+f(GV)+"   Received (closed): "+f(R)+"   Principal collected: "+f(PC)+"   Interest collected: "+f(IC),30,64);
+doc.autoTable({startY:74,head:[["SL","Party name","Area","Date","Mo.","Amount","Rate","Interest","Total due","Gold mg","Rate/mg","Gold value","Item","Closed on","Int. collected","Received"]],
+body:rows,foot:[["","TOTAL","","","",f(A),"",f(I),f(T),f(G),"",f(GV),"","",f(IC),f(R)]],showFoot:"lastPage",
+styles:{fontSize:7,cellPadding:2.5,fontStyle:"bold"},headStyles:{fillColor:[31,111,74]},footStyles:{fillColor:[233,239,233],textColor:20},margin:{left:30,right:30},
+didParseCell:function(d){if(d.section==="body"&&cl[d.row.index])d.cell.styles.textColor=[208,0,0]}});
+try{await dl.save({filename:"interest-report-"+nm.split(" ")[0].toLowerCase()+".pdf",data:doc.output("arraybuffer")})}catch(e){if(e&&e.code!=="declined")alert("Could not save the PDF ("+(e.code||"error")+")")}};
+function toast(m){var d=document.getElementById("toast");if(!d){d=document.createElement("div");d.id="toast";d.style.cssText="position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));background:#111;color:#fff;padding:12px;border-radius:10px;z-index:99;font-weight:800";document.body.appendChild(d)}d.textContent=m;d.style.display="block";clearTimeout(d._t);d._t=setTimeout(function(){d.style.display="none"},4500)}
+window.alert=function(m){toast(m)};
+function pd(v){if(typeof v==="number"&&v>20000&&v<80000)return new Date(Math.round((v-25569)*864e5)).toISOString().slice(0,10);
+var s=String(v==null?"":v).trim(),m=s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);if(m)return m[3]+"-"+("0"+m[2]).slice(-2)+"-"+("0"+m[1]).slice(-2);
+m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[1]+"-"+m[2]+"-"+m[3]:""}
+function tx(v){return v==null?"":String(v).trim()}
+function mapRows(rows){var out=[];rows.forEach(function(r){var n=tx(r[1]),d=pd(r[2]);if(!n||!d)return;var a=+String(r[5]==null?"":r[5]).replace(/,/g,"")||0,rt=+r[6];
+out.push({n:n,d:d,a:a,r:(rt>=0.1&&rt<=50)?rt:2,g:+r[10]||0,p:0,loc:tx(r[9]),it:tx(r[11]),st:(a&&tx(r[14]).toUpperCase()!=="CLOSED")?0:1,cd:pd(r[12]),cr:+r[13]||0})});return out}
+function parseCSV(s){s=s.replace(/^\uFEFF/,"");var rows=[],row=[],c="",q=false;for(var i=0;i<s.length;i++){var ch=s.charAt(i);
+if(q){if(ch==='"'){if(s.charAt(i+1)==='"'){c+='"';i++}else q=false}else c+=ch}
+else if(ch==='"')q=true;else if(ch===","){row.push(c);c=""}
+else if(ch==="\n"||ch==="\r"){if(ch==="\r"&&s.charAt(i+1)==="\n")i++;row.push(c);rows.push(row);row=[];c=""}else c+=ch}
+if(c!==""||row.length){row.push(c);rows.push(row)}return rows}
+function toCSV(rows){return rows.map(function(r){return r.map(function(v){v=v==null?"":String(v);return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(",")}).join("\r\n")}
+function ledgerRows(){var rows=[["SL","Party name","Date","Months","","Amount","Rate %","Interest","Total due","Area","Gold mg","Item","Closed on","Received","Status","Interest collected"]];
+E.forEach(function(e,k){var c=calc(e);rows.push([k+1,e.n,fd(e.d),e.st?"":c.m,"",e.a||"",e.r,e.st?"":Math.round(c.i*100)/100,e.st?"":Math.round(c.t*100)/100,e.loc||"",e.g||"",e.it||"",fd(e.cd),e.st?(e.cr||0):"",e.st?"CLOSED":"",e.st&&e.a?Math.max(0,(e.cr||0)-e.a):""])});return rows}
+function showText(s){$("xt").value=s;$("xt").style.display="block";$("xc").style.display="block"}
+async function out(name,mime,data,panel){
+if(panel!=null)showText(panel);
+if(typeof dl!=="undefined"&&dl){try{await dl.save({filename:name,data:data});imsg("Saved "+esc(name)+" ✓");return}catch(e){if(e&&e.code==="declined")return}}
+try{var file=new File([data],name,{type:mime});if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});imsg("Shared ✓");return}}catch(e){if(e&&e.name==="AbortError")return}
+try{var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:mime}));a.download=name;document.body.appendChild(a);a.click();a.remove();imsg("Download started. If no file appears, use the Copy text button below.")}catch(e){imsg("Use the Copy text button below.")}}
+$("bk").onclick=function(){var s=JSON.stringify({app:"interest-ledger",v:1,saved:new Date().toISOString(),goldRate:GR,entries:E});out("interest-backup-"+td()+".json","application/json",s,s)};
+$("bc").onclick=function(){var s=toCSV(ledgerRows());out("interest-ledger-"+td()+".csv","text/csv",s,s)};
+$("bx").onclick=function(){var rows=ledgerRows(),s=toCSV(rows);
+if(!window.XLSX){out("interest-ledger-"+td()+".csv","text/csv",s,s);imsg("Excel library not loaded (needs internet), so CSV was exported instead.");return}
+var ws=XLSX.utils.aoa_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Ledger");
+out("interest-ledger-"+td()+".xlsx","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",XLSX.write(wb,{type:"array",bookType:"xlsx"}),s)};
+$("xc").onclick=function(){var x=$("xt");x.focus();x.select();var ok=false;try{ok=document.execCommand("copy")}catch(e){}
+if(!ok&&navigator.clipboard){navigator.clipboard.writeText(x.value).then(function(){toast("Copied ✓")},function(){toast("Press and hold the text, then choose Copy")});return}
+toast(ok?"Copied ✓":"Press and hold the text, then choose Copy")};
+var pend=null;
+function imsg(h){$("imp").innerHTML=h}
+function stage(a,gr){if(!a.length){imsg("No entries found. Expected: column B = party name, C = date, F = amount.");return}
+var ac=a.filter(function(e){return !e.st}).length;pend={a:a,gr:gr};
+imsg("Found "+a.length+" entries ("+ac+" active, "+(a.length-ac)+" closed).<br><button id=\"imp_ok\">Replace all current data</button><button id=\"imp_no\" class=\"g2\">Cancel</button>");
+$("imp_ok").onclick=function(){E=pend.a;if(pend.gr!==undefined){GR=+pend.gr||0;$("G").value=GR||"";try{localStorage.setItem(KG,String(GR))}catch(e){}}save();render();imsg("Imported "+E.length+" entries ✓");pend=null};
+$("imp_no").onclick=function(){pend=null;imsg("Cancelled")}}
+function fromText(s){s=s.trim();if(s.charAt(0)==="{"||s.charAt(0)==="["){var o=JSON.parse(s),a=Array.isArray(o)?o:o.entries;if(!Array.isArray(a)||(a.length&&!a[0].n))throw new Error("Not a backup file");stage(a,o.goldRate)}else stage(mapRows(parseCSV(s)))}
+$("rf").onchange=function(){var inp=this,fl=inp.files&&inp.files[0];if(!fl){imsg("No file selected");return}
+imsg("Reading "+esc(fl.name)+" ...");var x=/\.(xlsx|xls)$/i.test(fl.name),r=new FileReader();
+r.onerror=function(){imsg("Could not read the file")};
+r.onload=function(){try{if(x){if(!window.XLSX){imsg("Excel reader needs internet. Export your sheet as CSV and import that instead, or paste the text below.");return}
+var wb=XLSX.read(r.result,{type:"array"});stage(mapRows(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true,defval:null})))}else fromText(r.result)}
+catch(e){imsg("Import failed: "+esc(e&&e.message||e))}inp.value=""};
+if(x)r.readAsArrayBuffer(fl);else r.readAsText(fl)};
+$("pi").onclick=function(){var s=$("pt").value;if(!s.trim()){imsg("Paste the backup text first");return}try{fromText(s)}catch(e){imsg("Import failed: "+esc(e&&e.message||e))}};
+try{claude.use("downloads").then(function(d){dl=d},function(){})}catch(e){}
+render();
+</script></body></html>
